@@ -1,0 +1,18 @@
+Bootstrap : docker
+From : alpine:3.20.3
+
+%post
+    V=3.1.1
+    
+    #apt-get --quiet install --yes libxml-libxml-perl
+    apk add libc6-compat
+    wget -O - https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/$V/sratoolkit.$V-centos_linux64-cloud.tar.gz | tar xz -C /
+    
+    echo "source /etc/profile.d/sra-tools.sh" >> $SINGULARITY_ENVIRONMENT 
+
+    
+%environment
+    echo 'test'
+    
+%runscript
+    exec echo 'runscript-test'
