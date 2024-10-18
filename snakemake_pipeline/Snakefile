@@ -1,0 +1,19 @@
+rule all:
+    input:
+        "genome.fa.bowtie"  # L'index du génome est l'objectif final
+
+rule download_genome:
+    output:
+        "ref_genome.fa"  # Le fichier FASTA téléchargé
+    threads: 1 #la règle utilisera un coeur (car il y a un unique fichier)
+    shell:
+        "wget -O {output} https://example.com/path/to/ref_genome.fa"  # Remplacez par l'URL réelle
+
+rule index_genome:
+    input:
+        "ref_genome.fa"  # Fichier d'entrée pour l'indexation
+    output:
+        "genome.fa.bowtie"  # Fichier d'index généré
+    threads: 1 #la règle utilisera un coeur (car il y a un unique fichier)
+    shell:
+        "bowtie-build {input} {output}"  # Commande pour créer l'index
