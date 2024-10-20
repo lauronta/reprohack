@@ -1,0 +1,21 @@
+Bootstrap : docker
+From : alpine:3.20.3
+
+%post
+    VERSION=0.12.7
+    
+    
+    wget -O bowtie.zip https://sourceforge.net/projects/bowtie-bio/files/bowtie/$VERSION/bowtie-$VERSION-linux-x86_64.zip/download 
+    
+    unzip bowtie.zip -d /usr/local/
+    rm bowtie.zip
+    ln -s /usr/local/bowtie-$VERSION/bowtie /usr/local/bin
+    
+    apk add libgcc libstdc++ gcompat
+    
+    
+%environment
+    echo 'test'
+    
+%runscript
+    exec echo 'runscript-test'
