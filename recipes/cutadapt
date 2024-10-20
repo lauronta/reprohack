@@ -1,0 +1,15 @@
+Bootstrap : docker
+From : python:2.7.18-alpine3.11
+
+%post
+    VERSION=1.11
+    apk add build-base
+    
+    pip install cutadapt==$VERSION
+    
+    apk del build-base
+    
+        
+%environment
+    
+%runscript
