@@ -7,7 +7,7 @@ rule download_genome:
         "ref_genome.fa"  # Le fichier FASTA téléchargé
     threads: 1 #la règle utilisera un coeur (car il y a un unique fichier)
     shell:
-        "wget -O {output} https://example.com/path/to/ref_genome.fa"  # Remplacez par l'URL réelle
+        "wget -O ref_genome.fa https://www.ncbi.nlm.nih.gov/nuccore/CP000253.1?report=fasta&log$=seqview"
 
 rule index_genome:
     input:
