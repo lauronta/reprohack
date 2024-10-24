@@ -16,6 +16,50 @@ rule index_genome:
         "genome.fa.bowtie"
     threads: 1
     params:
-        docker_image="/home/raphael_genin/IODAA/Hackathon/reprohack/recipes/bowtie"  # Chemin vers l'image Docker
+        docker_image="/home/raphael_genin/IODAA/Hackathon/reprohack/recipes/bowtie"  # Chemin vers l'image Docker : a changer
     shell:
         "docker run --rm -v {wildcards.dir}:/data {params.docker_image} bowtie-build /data/ref_genome.fa /data/genome.fa.bowtie"
+
+
+###RNA SEQ
+
+
+samples = ["sample1", "sample2", "sample3", "sample4", "sample5", "sample6"] #dictionnaire de nom, rien de plus
+urls = {
+    "sample1": "url1",
+    "sample2": "url2",
+    "sample3": "url3",
+    "sample4": "url4",
+    "sample5": "url5",
+    "sample6": "url6"
+}
+rule create_raw_dir: #création d'un répertoire raw pour stocker les fichiers temporaires
+    output:
+        directory("raw")
+    shell:
+        "mkdir -p raw"
+
+rule all:
+    input:
+        expand("trimmed_{sample}.fq.gz", sample=samples) #la fonction expand fait le bouclage cf. cours
+
+rule download_rnaseq:
+    output:
+        temp("raw/{sample}.fastq") #permet l'utilisation temporaire puis de supprimer afin de ne pas garder des fichiers lourds et inutiles
+    params:
+        url = lambda wildcards: urls[wildcards.sample] #wildcards est une variable ici qui change et prends la valeur de chaque
+    shell:
+        "wget -O raw/{sample}.fastq {params.url}" #les fichiers samples sont stocker tous stocker dans un fichier raw
+
+rule trim_galore:
+    input:
+        "raw/{sample}.fastq"
+    output:
+        "trimmed_{sample}.fq.gz" #toujours au format fastQ zippé
+    threads: 3
+    params:
+        docker_image="trim_galore"  # Nom de l'image Docker
+    shell:
+        "docker run --rm -v {wildcards.dir}:/data {params.docker_image} --gzip {input} -o ./trimmed"
+        #on compresse toujours en sortie les fchiers au format gzip
+        #création d'un fichier de sortie pour stocker les informations de trim_galore. Fichier s'appelle "trimmed" via -o ./trimmed
