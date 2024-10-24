@@ -11,9 +11,11 @@ rule download_genome:
 
 rule index_genome:
     input:
-        "ref_genome.fa"  # Fichier d'entrée pour l'indexation
+        "ref_genome.fa"
     output:
-        "genome.fa.bowtie"  # Fichier d'index généré
-    threads: 1 #la règle utilisera un coeur (car il y a un unique fichier)
+        "genome.fa.bowtie"
+    threads: 1
+    params:
+        docker_image="/home/raphael_genin/IODAA/Hackathon/reprohack/recipes/bowtie"  # Chemin vers l'image Docker
     shell:
-        "bowtie-build {input} {output}"  # Commande pour créer l'index
+        "docker run --rm -v {wildcards.dir}:/data {params.docker_image} bowtie-build /data/ref_genome.fa /data/genome.fa.bowtie"
