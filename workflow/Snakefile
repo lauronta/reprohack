@@ -1,7 +1,13 @@
+
+samples = ["SRR10379721", "SRR10379722", "SRR10379723", "SRR10379724", "SRR10379725", "SRR10379726"] #références des accesions 
+
+samples_dev = [ "SRR10379725", "SRR10379726"] #références des accesions 
+
+
 rule all:
     input:
-        "ref_genome.1.ebwt"  # L'index du génome est l'objectif final
-
+        "ref_genome.1.ebwt",  # L'index du génome est l'objectif final
+        expand("{sample}.fastq" , sample=samples_dev)
 rule download_ref_genome:
     output:
         "ref_genome.fna"  # fichier au format FASTA (.fa)
@@ -33,32 +39,36 @@ rule index_genome:
 ###RNA SEQ
 
 
-samples = ["sample1", "sample2", "sample3", "sample4", "sample5", "sample6"] #dictionnaire de nom, rien de plus
-urls = {
-    "sample1": "url1",
-    "sample2": "url2",
-    "sample3": "url3",
-    "sample4": "url4",
-    "sample5": "url5",
-    "sample6": "url6"
-}
+
 rule create_raw_dir: #création d'un répertoire raw pour stocker les fichiers temporaires
     output:
         directory("raw")
     shell:
         "mkdir -p raw"
 
-rule all:
-    input:
-        expand("trimmed_{sample}.fq.gz", sample=samples) #la fonction expand fait le bouclage cf. cours
+#rule all:
+#    input:
+#        expand("trimmed_{sample}.fq.gz", sample=samples) #la fonction expand fait le bouclage cf. cours
 
 rule download_rnaseq:
     output:
-        temp("raw/{sample}.fastq") #permet l'utilisation temporaire puis de supprimer afin de ne pas garder des fichiers lourds et inutiles
-    params:
-        url = lambda wildcards: urls[wildcards.sample] #wildcards est une variable ici qui change et prends la valeur de chaque
+        temp("{sample}/{sample}.sra") #permet l'utilisation temporaire puis de supprimer afin de ne pas garder des fichiers lourds et inutiles
+    singularity : "img/sra_toolkit.sif"
+    resources:
+        shell_exec="sh"
     shell:
-        "wget -O raw/{sample}.fastq {params.url}" #les fichiers samples sont stocker tous stocker dans un fichier raw
+        "prefetch {wildcards.sample}" #les fichiers samples sont stocker tous stocker dans un fichier raw
+
+rule extract_rnaseq:
+    input :
+        "{sample}/{sample}.sra"
+    output:
+        "{sample}.fastq" 
+    singularity : "img/sra_toolkit.sif"
+    resources:
+        shell_exec="sh"
+    shell:
+        "fasterq-dump --threads=1 {input}" 
 
 rule trim_galore:
     input:
