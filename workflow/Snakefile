@@ -7,7 +7,8 @@ samples_dev = [ "SRR10379725", "SRR10379726"] #références des accesions
 rule all:
     input:
         "ref_genome.1.ebwt",  # L'index du génome est l'objectif final
-        expand("{sample}.fastq" , sample=samples_dev)
+        expand("trimmed_{sample}.fastq.gz" , sample=samples_dev)
+        
 rule download_ref_genome:
     output:
         "ref_genome.fna"  # fichier au format FASTA (.fa)
@@ -39,13 +40,6 @@ rule index_genome:
 ###RNA SEQ
 
 
-
-rule create_raw_dir: #création d'un répertoire raw pour stocker les fichiers temporaires
-    output:
-        directory("raw")
-    shell:
-        "mkdir -p raw"
-
 #rule all:
 #    input:
 #        expand("trimmed_{sample}.fq.gz", sample=samples) #la fonction expand fait le bouclage cf. cours
@@ -57,9 +51,9 @@ rule download_rnaseq:
     resources:
         shell_exec="sh"
     shell:
-        "prefetch {wildcards.sample}" #les fichiers samples sont stocker tous stocker dans un fichier raw
+        "prefetch {wildcards.sample}" 
 
-rule extract_rnaseq:
+rule extract_rnaseq: #extract from sra --> fastq : ressource intensive, file size can increase a lot !
     input :
         "{sample}/{sample}.sra"
     output:
@@ -70,15 +64,14 @@ rule extract_rnaseq:
     shell:
         "fasterq-dump --threads=1 {input}" 
 
-rule trim_galore:
+rule trim:
     input:
-        "raw/{sample}.fastq"
+        "{sample}.fastq"
     output:
-        "trimmed_{sample}.fq.gz" #toujours au format fastQ zippé
-    threads: 3
-    params:
-        docker_image="trim_galore"  # Nom de l'image Docker
+        "trimmed_{sample}.fastq.gz" 
+    resources:
+        shell_exec="sh"
+    singularity : "img/cutadapt.sif"
     shell:
-        "docker run --rm -v {wildcards.dir}:/data {params.docker_image} --gzip {input} -o ./trimmed"
-        #on compresse toujours en sortie les fchiers au format gzip
-        #création d'un fichier de sortie pour stocker les informations de trim_galore. Fichier s'appelle "trimmed" via -o ./trimmed
+        "cutadapt -q 25 -o {output} {input}" # gzip compressed output
+        
