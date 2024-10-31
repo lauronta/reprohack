@@ -1,6 +1,6 @@
 rule all:
     input:
-        "genome.fa.bowtie"  # L'index du génome est l'objectif final
+        "ref_genome.1.ebwt"  # L'index du génome est l'objectif final
 
 rule download_ref_genome:
     output:
@@ -17,17 +17,17 @@ rule download_annotated_ref_genome:
         "wget -O - https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/013/425/GCF_000013425.1_ASM1342v1/GCF_000013425.1_ASM1342v1_genomic.gff.gz | gzip -d > {output}"
 
 
-
 rule index_genome:
     input:
-        "ref_genome.fa"
+        "ref_genome.fna"
     output:
-        "genome.fa.bowtie"
+        "ref_genome.{obs}.ebwt"
     threads: 1
-    params:
-        docker_image="/home/raphael_genin/IODAA/Hackathon/reprohack/recipes/bowtie"  # Chemin vers l'image Docker : a changer
+    singularity : "img/bowtie.sif"
+    resources:
+        shell_exec="sh"
     shell:
-        "docker run --rm -v {wildcards.dir}:/data {params.docker_image} bowtie-build /data/ref_genome.fa /data/genome.fa.bowtie"
+        "bowtie-build {input} ref_genome"
 
 
 ###RNA SEQ
