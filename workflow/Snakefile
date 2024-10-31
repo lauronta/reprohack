@@ -1,65 +1,77 @@
+
+samples = ["SRR10379721", "SRR10379722", "SRR10379723", "SRR10379724", "SRR10379725", "SRR10379726"] #références des accesions 
+
+samples_dev = [ "SRR10379725", "SRR10379726"] #références des accesions 
+
+
 rule all:
     input:
-        "genome.fa.bowtie"  # L'index du génome est l'objectif final
-
-rule download_genome:
+        "ref_genome.1.ebwt",  # L'index du génome est l'objectif final
+        expand("trimmed_{sample}.fastq.gz" , sample=samples_dev)
+        
+rule download_ref_genome:
     output:
-        "ref_genome.fa"  # Le fichier FASTA téléchargé
+        "ref_genome.fna"  # fichier au format FASTA (.fa)
     threads: 1 #la règle utilisera un coeur (car il y a un unique fichier)
     shell:
-        "wget -O ref_genome.fa https://www.ncbi.nlm.nih.gov/nuccore/CP000253.1?report=fasta&log$=seqview"
+        "wget -O - https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/013/425/GCF_000013425.1_ASM1342v1/GCF_000013425.1_ASM1342v1_genomic.fna.gz | gzip -d > {output}"
+
+rule download_annotated_ref_genome:
+    output:
+        "ref_genome.gff"  #annotation au format .gff
+    threads: 1 #la règle utilisera un coeur (car il y a un unique fichier)
+    shell:
+        "wget -O - https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/013/425/GCF_000013425.1_ASM1342v1/GCF_000013425.1_ASM1342v1_genomic.gff.gz | gzip -d > {output}"
+
 
 rule index_genome:
     input:
-        "ref_genome.fa"
+        "ref_genome.fna"
     output:
-        "genome.fa.bowtie"
+        "ref_genome.{obs}.ebwt"
     threads: 1
-    params:
-        docker_image="/home/raphael_genin/IODAA/Hackathon/reprohack/recipes/bowtie"  # Chemin vers l'image Docker : a changer
+    singularity : "img/bowtie.sif"
+    resources:
+        shell_exec="sh"
     shell:
-        "docker run --rm -v {wildcards.dir}:/data {params.docker_image} bowtie-build /data/ref_genome.fa /data/genome.fa.bowtie"
+        "bowtie-build {input} ref_genome"
 
 
 ###RNA SEQ
 
 
-samples = ["sample1", "sample2", "sample3", "sample4", "sample5", "sample6"] #dictionnaire de nom, rien de plus
-urls = {
-    "sample1": "url1",
-    "sample2": "url2",
-    "sample3": "url3",
-    "sample4": "url4",
-    "sample5": "url5",
-    "sample6": "url6"
-}
-rule create_raw_dir: #création d'un répertoire raw pour stocker les fichiers temporaires
-    output:
-        directory("raw")
-    shell:
-        "mkdir -p raw"
-
-rule all:
-    input:
-        expand("trimmed_{sample}.fq.gz", sample=samples) #la fonction expand fait le bouclage cf. cours
+#rule all:
+#    input:
+#        expand("trimmed_{sample}.fq.gz", sample=samples) #la fonction expand fait le bouclage cf. cours
 
 rule download_rnaseq:
     output:
-        temp("raw/{sample}.fastq") #permet l'utilisation temporaire puis de supprimer afin de ne pas garder des fichiers lourds et inutiles
-    params:
-        url = lambda wildcards: urls[wildcards.sample] #wildcards est une variable ici qui change et prends la valeur de chaque
+        temp("{sample}/{sample}.sra") #permet l'utilisation temporaire puis de supprimer afin de ne pas garder des fichiers lourds et inutiles
+    singularity : "img/sra_toolkit.sif"
+    resources:
+        shell_exec="sh"
     shell:
-        "wget -O raw/{sample}.fastq {params.url}" #les fichiers samples sont stocker tous stocker dans un fichier raw
+        "prefetch {wildcards.sample}" 
 
-rule trim_galore:
-    input:
-        "raw/{sample}.fastq"
+rule extract_rnaseq: #extract from sra --> fastq : ressource intensive, file size can increase a lot !
+    input :
+        "{sample}/{sample}.sra"
     output:
-        "trimmed_{sample}.fq.gz" #toujours au format fastQ zippé
-    threads: 3
-    params:
-        docker_image="trim_galore"  # Nom de l'image Docker
+        "{sample}.fastq" 
+    singularity : "img/sra_toolkit.sif"
+    resources:
+        shell_exec="sh"
     shell:
-        "docker run --rm -v {wildcards.dir}:/data {params.docker_image} --gzip {input} -o ./trimmed"
-        #on compresse toujours en sortie les fchiers au format gzip
-        #création d'un fichier de sortie pour stocker les informations de trim_galore. Fichier s'appelle "trimmed" via -o ./trimmed
+        "fasterq-dump --threads=1 {input}" 
+
+rule trim:
+    input:
+        "{sample}.fastq"
+    output:
+        "trimmed_{sample}.fastq.gz" 
+    resources:
+        shell_exec="sh"
+    singularity : "img/cutadapt.sif"
+    shell:
+        "cutadapt -q 25 -o {output} {input}" # gzip compressed output
+        
