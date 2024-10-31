@@ -10,6 +10,7 @@ From : alpine:3.20.3
     unzip bowtie.zip -d /usr/local/
     rm bowtie.zip
     ln -s /usr/local/bowtie-$VERSION/bowtie /usr/local/bin
+    ln -s /usr/local/bowtie-$VERSION/bowtie-build /usr/local/bin
     
     apk add libgcc libstdc++ gcompat
     
