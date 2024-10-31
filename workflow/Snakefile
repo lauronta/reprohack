@@ -2,12 +2,21 @@ rule all:
     input:
         "genome.fa.bowtie"  # L'index du génome est l'objectif final
 
-rule download_genome:
+rule download_ref_genome:
     output:
-        "ref_genome.fa"  # Le fichier FASTA téléchargé
+        "ref_genome.fna"  # fichier au format FASTA (.fa)
     threads: 1 #la règle utilisera un coeur (car il y a un unique fichier)
     shell:
-        "wget -O ref_genome.fa https://www.ncbi.nlm.nih.gov/nuccore/CP000253.1?report=fasta&log$=seqview"
+        "wget -O - https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/013/425/GCF_000013425.1_ASM1342v1/GCF_000013425.1_ASM1342v1_genomic.fna.gz | gzip -d > {output}"
+
+rule download_annotated_ref_genome:
+    output:
+        "ref_genome.gff"  #annotation au format .gff
+    threads: 1 #la règle utilisera un coeur (car il y a un unique fichier)
+    shell:
+        "wget -O - https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/013/425/GCF_000013425.1_ASM1342v1/GCF_000013425.1_ASM1342v1_genomic.gff.gz | gzip -d > {output}"
+
+
 
 rule index_genome:
     input:
