@@ -6,9 +6,11 @@ samples_dev = [ "SRR10379725", "SRR10379726"] #références des accesions
 
 rule all:
     input:
-        "ref_genome.1.ebwt",  # L'index du génome est l'objectif final
-        expand("trimmed_{sample}.fastq.gz" , sample=samples_dev)
-        
+        expand("{sample}.bam" , sample=samples_dev)
+
+
+# Téléchargement 
+
 rule download_ref_genome:
     output:
         "ref_genome.fna"  # fichier au format FASTA (.fa)
@@ -23,27 +25,6 @@ rule download_annotated_ref_genome:
     shell:
         "wget -O - https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/013/425/GCF_000013425.1_ASM1342v1/GCF_000013425.1_ASM1342v1_genomic.gff.gz | gzip -d > {output}"
 
-
-rule index_genome:
-    input:
-        "ref_genome.fna"
-    output:
-        "ref_genome.{obs}.ebwt"
-    threads: 1
-    singularity : "img/bowtie.sif"
-    resources:
-        shell_exec="sh"
-    shell:
-        "bowtie-build {input} ref_genome"
-
-
-###RNA SEQ
-
-
-#rule all:
-#    input:
-#        expand("trimmed_{sample}.fq.gz", sample=samples) #la fonction expand fait le bouclage cf. cours
-
 rule download_rnaseq:
     output:
         temp("{sample}/{sample}.sra") #permet l'utilisation temporaire puis de supprimer afin de ne pas garder des fichiers lourds et inutiles
@@ -52,6 +33,20 @@ rule download_rnaseq:
         shell_exec="sh"
     shell:
         "prefetch {wildcards.sample}" 
+
+
+rule index_genome:
+    input:
+        "ref_genome.fna"
+    output:
+        expand("ref_genome.{index_elements}.ebwt",index_elements = ["1","2","3","4","rev.1","rev.2"])
+    threads: 1
+    singularity : "img/bowtie.sif"
+    resources:
+        shell_exec="sh"
+    shell:
+        "bowtie-build {input} ref_genome"
+
 
 rule extract_rnaseq: #extract from sra --> fastq : ressource intensive, file size can increase a lot !
     input :
@@ -75,3 +70,13 @@ rule trim:
     shell:
         "cutadapt -q 25 -o {output} {input}" # gzip compressed output
         
+rule map:
+    input:
+        sequence = "trimmed_{sample}.fastq.gz",
+        index = expand("ref_genome.{index_elements}.ebwt",index_elements = ["1","2","3","4","rev.1","rev.2"])
+    output:
+        "{sample}.bam" 
+    singularity : "img/samtools+bowtie.sif"
+    threads : 1
+    shell:
+        "gunzip -c {input.sequence} |bowtie -p {threads} -S  ref_genome -  |  samtools sort -@ {threads} - > {output} "
