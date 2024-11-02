@@ -6,7 +6,7 @@ samples_dev = [ "SRR10379725", "SRR10379726"] #références des accesions
 
 rule all:
     input:
-        expand("{sample}.bam" , sample=samples_dev)
+        expand("{sample}_counts.txt" , sample="test")
 
 
 # Téléchargement 
@@ -68,7 +68,7 @@ rule trim:
         shell_exec="sh"
     singularity : "img/cutadapt.sif"
     shell:
-        "cutadapt -q 25 -o {output} {input}" # gzip compressed output
+        "cutadapt -a AGATCGGAAGAGCACACGTCTGAACTCCAGTCA -q 30 -m 25 -o {output} {input}" # adapter sequence found at : https://support-docs.illumina.com/SHARE/AdapterSequences/Content/SHARE/AdapterSeq/TruSeq/UDIndexes.htm
         
 rule map:
     input:
@@ -80,3 +80,16 @@ rule map:
     threads : 1
     shell:
         "gunzip -c {input.sequence} |bowtie -p {threads} -S  ref_genome -  |  samtools sort -@ {threads} - > {output} "
+
+rule count :
+    input:
+        annotation = "ref_genome.gff",
+        id = "{sample}.bam"
+    output:
+         "{sample}_counts.txt"
+    singularity: "img/subread.sif"
+    resources:
+        shell_exec="sh"
+    threads : 1
+    shell:
+        "featureCounts -T {threads} -t gene -g ID -a {input.annotation} -o {output} {input.id}"

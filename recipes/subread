@@ -2,15 +2,13 @@ Bootstrap : docker
 From : alpine:3.20.3
 
 %post
-    V=2.0.7
+    V=1.4.6-p3
     
-    #apt-get --quiet install --yes libxml-libxml-perl
-    #apk add libc6-compat
     wget -O - https://sourceforge.net/projects/subread/files/subread-$V/subread-$V-Linux-x86_64.tar.gz | tar xz 
 
     cd subread-$V-Linux-x86_64/
     mv bin/* /usr/local/bin/
     cd / && rm -rf subread-$V-Linux-x86_64/
-    
-    #echo "source /etc/profile.d/sra-tools.sh" >> $SINGULARITY_ENVIRONMENT 
 
+%environment
+    featureCounts -v
