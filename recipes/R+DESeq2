@@ -1,0 +1,24 @@
+Bootstrap: docker
+From: rocker/r-ver:latest
+
+%post
+    # Installe les dépendances nécessaires pour DESeq2 et R
+    apt-get update && apt-get install -y \
+        libcurl4-openssl-dev \
+        libssl-dev \
+        libxml2-dev \
+        gfortran \
+        libudunits2-dev \
+        libnetcdf-dev \
+        libjpeg-dev \
+        libpng-dev \
+        liblzma-dev \
+        build-essential
+
+    # Installe Bioconductor et DESeq2 dans R
+    R -e "install.packages('BiocManager')"
+    R -e "BiocManager::install('DESeq2')"
+
+%runscript
+    # Par défaut, lance R lorsque l'image est exécutée
+    exec R "$@"
