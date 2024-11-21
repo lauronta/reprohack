@@ -1,24 +1,26 @@
-Bootstrap: docker
-From: rocker/r-ver:latest
+Bootstrap : docker
+From : rocker/r-ver:3.4.1
 
 %post
-    # Installe les dépendances nécessaires pour DESeq2 et R
-    apt-get update && apt-get install -y \
-        libcurl4-openssl-dev \
-        libssl-dev \
-        libxml2-dev \
-        gfortran \
-        libudunits2-dev \
-        libnetcdf-dev \
-        libjpeg-dev \
-        libpng-dev \
-        liblzma-dev \
-        build-essential
+    #DESEQ2VERSION = 1.16 
 
-    # Installe Bioconductor et DESeq2 dans R
-    R -e "install.packages('BiocManager')"
-    R -e "BiocManager::install('DESeq2')"
+    # update package repo & install dependencies
+    echo 'deb http://archive.debian.org/debian/ stretch contrib main non-free' > /etc/apt/sources.list
+    apt update
+    apt install -y --no-install-recommends libcurl4-openssl-dev libxml2-dev zlib1g-dev
+
+    # install Bioc
+    echo 'install.packages("BiocInstaller", repos="https://bioconductor.org/packages/3.5/bioc")' | r -
+    echo '# Configure a CRAN snapshot compatible with Bioconductor 3.5: \n options(repos = c(CRAN = "https://packagemanager.posit.co/cran/2017-10-30"))' > /usr/local/lib/R/etc/Rprofile.site
+    
+    # install DESeq2
+    echo 'BiocInstaller::biocLite("DESeq2")' | r -
+  
+    
+%environment
+
 
 %runscript
-    # Par défaut, lance R lorsque l'image est exécutée
-    exec R "$@"
+    cat /usr/local/lib/R/site-library/DESeq2/DESCRIPTION | echo "DESeq2 $(grep Version)"
+
+

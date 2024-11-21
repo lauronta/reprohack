@@ -1,12 +1,12 @@
 
 samples = ["SRR10379721", "SRR10379722", "SRR10379723", "SRR10379724", "SRR10379725", "SRR10379726"] #références des accesions 
 
-samples_dev = [ "SRR10379725", "SRR10379726"] #références des accesions 
+samples_dev = ["test_21"] #références des accesions 
 
 
 rule all:
     input:
-        expand("{sample}_counts.txt" , sample="test")
+        expand("{sample}.bam" , sample=samples_dev)
 
 
 # Téléchargement 
@@ -92,4 +92,4 @@ rule count :
         shell_exec="sh"
     threads : 1
     shell:
-        "featureCounts -T {threads} -t gene -g ID -a {input.annotation} -o {output} {input.id}"
+        "featureCounts -T {threads} -t gene -g ID -s 1 -a {input.annotation} -o {output} {input.id}"
