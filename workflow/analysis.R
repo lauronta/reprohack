@@ -1,14 +1,14 @@
 library(DESeq2)
-library(readr)
 
 help(DESeq2)
+
 
 ## DESeqDataSet --> dds
 
 # 4 different input data type for DESeqDataSet creation 
 # here we focus on count matrix of read counts (with featureCounts) input
 
-data <- read_table("test_counts.txt", skip = 1)
+data = read.table("test_counts (2).txt", header = TRUE, skip =1)
 
 # drop first columns in featureCounts file, keep only the counts_data_matrix
 data <- data[, -seq(1, 6)]
@@ -27,6 +27,7 @@ print(coldata)
 dds <- DESeqDataSetFromMatrix(countData = data, colData = coldata, design = ~ condition)
 
 
+
 # correcting variance
 # vst (n<30 ) or rlog (n>30) approach
 # use 
@@ -39,3 +40,4 @@ dds <- DESeq(dds)
 res <- results(dds)
 
 plotMA(res, colSig = "red", ylim=c(-6,5))
+# 
