@@ -9,10 +9,6 @@ From : alpine:3.20.3
     wget -O - https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/$V/sratoolkit.$V-centos_linux64-cloud.tar.gz | tar xz -C /
     
     echo "source /etc/profile.d/sra-tools.sh" >> $SINGULARITY_ENVIRONMENT 
-
-    
-%environment
-    echo 'test'
-    
+   
 %runscript
-    exec echo 'runscript-test'
+    fasterq-dump -V

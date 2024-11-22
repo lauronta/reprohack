@@ -1,0 +1,12 @@
+.snakemake/
+*.pdf
+*.fastq
+*.ebwt
+*.bam
+*.fastq.gz
+*.fna
+*.fna
+*.gff
+*.d
+img/
+SRR*/
