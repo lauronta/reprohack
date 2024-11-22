@@ -6,7 +6,7 @@ samples_dev = ["test_21"] #références des accesions
 
 rule all:
     input:
-        expand("{sample}.bam" , sample=samples_dev)
+        expand("{sample}_counts.txt" , sample=samples_dev)
 
 
 # Téléchargement 
