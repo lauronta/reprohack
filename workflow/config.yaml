@@ -1,0 +1,89 @@
+# ============================================================================
+# Config file for RNA-seq
+#
+# ==================[ Sections for the users ]================================
+#
+# ****************************************************************************
+
+# ****************************************************************************
+
+
+# ============================================================================
+
+singularity:
+  sra_toolkit: "library://lauronta/reprohack/sra-toolkit:3.1.1"
+  cutadapt: "library://lauronta/reprohack/cutadapt:1.11"
+  bowtie+samtools: "library://lauronta/reprohack/bowtie-samtools:latest"
+  subread: "library://lauronta/reprohack/subread:1.4.6-p3"
+  R+DESeq2: "library://lauronta/reprohack/r-deseq2:1.16.1"
+
+# =========================================== Sections for the users
+
+
+#######################################################################
+# Quality trimming and adapter removal
+#
+#
+# - m: 20 means discard trimmed reads that are shorter than 20. must be > 0
+# - quality: 0 means no trimming, 30 means keep base with quality
+#        above 30
+# - primer: sequence used for primer removal,
+#     - g for 5'
+#     - a for 3'
+#     - b for both 5'/3'
+# - threads: number of threads to use
+#
+cutadapt:
+    m: 25                       # {"strict_min": 0}
+    primer: '-a AGATCGGAAGAGCACACGTCTGAACTCCAGTCA'                     # {"values": ["b","g","a"]}
+    quality: 30                 # {"range": [0,40]}
+    threads: 4
+
+#############################################################################
+# bowtie_mapping_rna used to align reads against ribosomal RNA
+#
+# :Parameters:
+#
+# - options: any options recognised by bowtie1 tool
+# - threads: number of threads to be used
+bowtie_mapping_rna:
+    options: ''
+    threads: 4
+
+#############################################################################
+# bowtie_index used to build the index
+#
+# :Parameters:
+#
+# - options: any options recognised by bowtie2 tool
+# - threads: number of threads to be used
+#
+
+bowtie_index:
+    options: ''
+    threads: 4
+    resources:
+      mem: 20G
+
+#############################################################################
+# feature_counts used to count reads against features
+#
+# :Parameters:
+#
+# - threads: number of threads to be used
+# - strandness: (optional) you should provide the strand parameters, given
+#      from the experimental design. If not provided, we will guess it (see
+#      tolerance parameter here below)
+# - feature: this is equivalent to the -t option to specify the feature type in GTF
+#     annotation. For example gene, exon (default). 
+# - attribute: this is the -g option to specify the attribute type in GTF annoation. 
+#   (gene_id) by default. 
+# - extra_attributes: any other 
+
+feature_counts:
+    strandness: 1   # set to 0, 1, 2 to force te type of strandness
+    threads: 2       # 
+    feature: gene    # could be exon, mRNA, etc
+    attribute: ID    # could be ID, gene_id, etc
+
+

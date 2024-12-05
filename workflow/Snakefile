@@ -3,12 +3,13 @@ samples = ["SRR10379721", "SRR10379722", "SRR10379723", "SRR10379724", "SRR10379
 
 samples_dev = ["test_21"] #références des accesions 
 
+configfile: "workflow/config.yaml"
 
 localrules: all, download_annotated_ref_genome, download_ref_genome, download_rnaseq # pour améliorer les choses sur un cluster 
 
 rule all:
     input:
-        expand("{sample}.bam" , sample=samples_dev)
+        "counts.txt"
 
 
 # Téléchargement 
@@ -43,7 +44,7 @@ rule index_genome:
     output:
         expand("ref_genome.{index_elements}.ebwt",index_elements = ["1","2","3","4","rev.1","rev.2"])
     threads: 1
-    singularity : "img/bowtie.sif"
+    singularity: config["singularity"]["bowtie+samtools"]
     resources:
         shell_exec="sh"
     shell:
@@ -51,11 +52,11 @@ rule index_genome:
 
 
 rule extract_rnaseq: #extract from sra --> fastq : ressource intensive, file size can increase a lot !
-    input :
+    input:
         "{sample}/{sample}.sra"
     output:
         "{sample}.fastq" 
-    singularity : "img/sra_toolkit.sif"
+    singularity: config["singularity"]["sra_toolkit"]
     resources:
         shell_exec="sh"
     shell:
@@ -68,9 +69,14 @@ rule trim:
         "trimmed_{sample}.fastq.gz" 
     resources:
         shell_exec="sh"
-    singularity : "img/cutadapt.sif"
+    singularity: config["singularity"]["cutadapt"]
+    threads: config["cutadapt"]["threads"]
+    params:
+        config["cutadapt"]["primer"],
+        config["cutadapt"]["quality"],
+        config["cutadapt"]["m"]
     shell:
-        "cutadapt -a AGATCGGAAGAGCACACGTCTGAACTCCAGTCA -q 30 -m 25 -o {output} {input}" # adapter sequence found at : https://support-docs.illumina.com/SHARE/AdapterSequences/Content/SHARE/AdapterSeq/TruSeq/UDIndexes.htm
+        "cutadapt {params[0]} -q {params[1]} -m {params[2]} -o {output} {input}" # adapter sequence found at : https://support-docs.illumina.com/SHARE/AdapterSequences/Content/SHARE/AdapterSeq/TruSeq/UDIndexes.htm
         
 rule map:
     input:
@@ -78,20 +84,25 @@ rule map:
         index = expand("ref_genome.{index_elements}.ebwt",index_elements = ["1","2","3","4","rev.1","rev.2"])
     output:
         "{sample}.bam" 
-    singularity : "img/samtools+bowtie.sif"
-    threads : 1
+    singularity: config["singularity"]["bowtie+samtools"]
+    threads: config['bowtie_mapping_rna']['threads']
     shell:
-        "gunzip -c {input.sequence} |bowtie -p {threads} -S  ref_genome -  |  samtools sort -@ {threads} - > {output} "
+        "gunzip -c {input.sequence} | bowtie -p {threads} -S ref_genome - | samtools sort -@ {threads} - > {output}"
 
-rule count :
+rule count:
     input:
         annotation = "ref_genome.gff",
-        id = "{sample}.bam"
+        id = expand("{sample}.bam" , sample=samples)
     output:
-         "{sample}_counts.txt"
-    singularity: "img/subread.sif"
+         "counts.txt","counts.txt.summary"
+    singularity: config["singularity"]["subread"]
+    params: 
+        config["feature_counts"]["feature"],
+        config["feature_counts"]["attribute"],
+        config["feature_counts"]["strandness"]
+
     resources:
         shell_exec="sh"
-    threads : 1
+    threads: config["feature_counts"]["threads"]
     shell:
-        "featureCounts -T {threads} -t gene -g ID -s 1 -a {input.annotation} -o {output} {input.id}"
+        "featureCounts -T {threads} -t {params[0]} -g {params[1]} -s {params[2]} -a {input.annotation} -o {output[0]} {input.id}"
