@@ -31,7 +31,7 @@ rule download_annotated_ref_genome:
 rule download_rnaseq:
     output:
         temp("{sample}/{sample}.sra") #permet l'utilisation temporaire puis de supprimer afin de ne pas garder des fichiers lourds et inutiles
-    singularity : "img/sra_toolkit.sif"
+    singularity : config["singularity"]["sra_toolkit"]
     resources:
         shell_exec="sh"
     shell:
