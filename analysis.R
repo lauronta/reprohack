@@ -25,37 +25,13 @@ data <- data[, -seq(1, 6)]
 
 
 # definition of the experimental plan
-sample <- c("SRR10379721.bam",
-            "SRR10379722.bam",
-            "SRR10379723.bam",
-            "SRR10379724.bam",
-            "SRR10379725.bam",
-            "SRR10379726.bam")
-coldata <- matrix(c("persister replicate 1",
-                    "persister replicate 2",
-                    "persister replicate 3",
-                    "control replicate 1",
-                    "control recplicate 2",
-                    "control replicate 3"),
-                    dimnames = list(sample, 'condition'))
-print(coldata)
-
+sample <- c("SRR10379721.bam", "SRR10379722.bam", "SRR10379723.bam",
+            "SRR10379724.bam", "SRR10379725.bam", "SRR10379726.bam")
+conditions <- c("persister", "persister", "persister",
+                "control", "control", "control")
 
 # first if it is a control or test group -- replace with colnames of data
-coldata <- matrix( c("persister",
-                     "persister",
-                     "persister",
-                     "control",
-                     "control",
-                     "control"), 
-                    dimnames = list(c("SRR10379721.bam",
-                                     "SRR10379722.bam",
-                                     "SRR10379723.bam",
-                                     "SRR10379724.bam",
-                                     "SRR10379725.bam",
-                                     "SRR10379726.bam"),
-                                      'condition') 
-                   )
+coldata <- matrix(conditions, dimnames = list(sample, 'condition'))
 print(coldata)
 
 dds <- DESeqDataSetFromMatrix(countData = data,
@@ -90,7 +66,8 @@ res_df$significance <- ifelse(
   ifelse(res_df$padj < alpha, "Significant", "Not Significant")
 )
 
-ggplot(res_df, aes(x = baseMean, y = log2FoldChange, color = significance)) +
+plt <- ggplot(res_df, aes(x = baseMean, y = log2FoldChange,
+                          color = significance)) +
   geom_point(alpha = 0.5, size = 1) +
   scale_color_manual(values = c(
     "Not Significant" = "black", 
@@ -102,3 +79,5 @@ ggplot(res_df, aes(x = baseMean, y = log2FoldChange, color = significance)) +
   scale_x_log10() +
   scale_y_continuous(breaks=seq(-4, 4, 2)) +
   theme_gray()
+
+ggsave('Supplementary Figure 3.png',plt, scale=1)

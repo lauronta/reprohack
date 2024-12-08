@@ -17,7 +17,6 @@ f <- function(el) el[length(el)]
 get_gene_name <- function(data,clef1,clef2,clef3){
   # on descend dans la hiérarchie
   col1 <- data$children$name
-  print(col1)
   
   # on sélectionne selon le mask
   mask <- col1 == clef1
@@ -25,16 +24,15 @@ get_gene_name <- function(data,clef1,clef2,clef3){
   
   #on descend encore dans la hiérachie 
   col2 <- data$name
-  print(col2)
   
-  # on sélectionne le masque deux
+  # on sélectionne le deuxième masque
   mask <- col2 == clef2
   data <- data$children[mask][[1]]
   
+  #on descend dans la hiérarchie
   col3 <- data$name
-  print(col3)
   
-  
+  #on sélectionne le troisième masque
   mask <- col3 == clef3
   data <- data$children[mask][[1]]
   
@@ -42,7 +40,7 @@ get_gene_name <- function(data,clef1,clef2,clef3){
   data <- data %>% mutate(name = sapply(strsplit(as.character(data$name), split=";"), "[",1))
   
   
-  # split pour prendre la première colonne le code du gène et le dernier élément le nom du gène
+  #split pour prendre dans la première colonne le code du gène et le nom du gène
   
   name <- sapply(strsplit(as.character(data$name), split=" "), f)
   geneID <- sapply(strsplit(as.character(data$name), split=" "), "[",1)
@@ -93,11 +91,8 @@ data = read.table("counts.txt", header = TRUE, skip =1)
 # Arrangement de la colonne Geneid  :  gene-SAOUHSC_00001 --> SAOUHSC_00001 
 data$Geneid <- sapply(strsplit(as.character(data$Geneid), split="-"), "[", 2)
 
-# Supprimer les lignes où 'Geneid' ne correspond pas à 'trans_genes'
-data_filtrée <- data[data$Geneid %in% gene_names$geneID, ]
-
 # drop comuns in counts file, keep only Geneid and the counts_data_matrix
-data = data_filtrée
+#data = data_filtrée
 data <- data[, -seq(2, 6)]
 
 #definition of the experimental plan
@@ -123,7 +118,7 @@ res_df <- as.data.frame(res)
 head(res_df)
 
 # compute log2BaseMean
-res_df$log2_baseMean <- log2(res_df$baseMean)
+# res_df$log2_baseMean <- log2(res_df$baseMean)
 
 # add information from KEGG orthology previously downloaded
 res_df$geneID <- rownames(res_df)
@@ -133,14 +128,10 @@ res_df <- left_join(res_df,gene_names, by = c("geneID"="geneID"))
 # Définition d'une liste de gènes à afficher
 genes_to_annotate <- c("frr", "infA", "infB", "tsf", "infC", "PTH1")
 
-# Définition d'une liste d'annotation pour récupérer les noms de gènes à placer dans le graph
-#rownames(res_df) %in% genes_to_annotate
-#annotation_df <- res_df[rownames(res_df) %in% genes_to_annotate, ]
-#print(annotation_df)
 
 ################################################################################
-# Plotting
-ggplot(res_df) +
+# Ploting
+plt <- ggplot(res_df) +
   theme_bw()+
   geom_point(aes(x = log2_baseMean, y = log2FoldChange, color = ifelse(is.na(padj), "NA", 
               ifelse(padj < 0.05, "Significant", "Not Significant"))), 
@@ -149,7 +140,8 @@ ggplot(res_df) +
   geom_point(data= filter(res_df, label=='00970 Aminoacyl-tRNA biosynthesis [PATH:sao00970]' ), 
              aes(x = log2_baseMean, y = log2FoldChange,shape = 'AA-tRNA synthetases'), stroke=1, colour = 'black')+
   scale_shape_manual(values = c("AA-tRNA synthetases" = 1))+
-  geom_text_repel(data=filter(res_df, name %in% genes_to_annotate),aes(x=log2_baseMean,y=log2FoldChange,label=name),size=8,box.padding = 5)+
+  geom_text_repel(data=filter(res_df, name %in% genes_to_annotate),
+                  aes(x=log2_baseMean,y=log2FoldChange,label=name),size=18/.pt,box.padding = 2)+
   geom_hline(yintercept = 0, linetype = "dashed", color = "black", size = 1) +
   labs(x = expression(Log[2] *" Base Mean"), y = expression(Log[2] *" Fold Change")) +
   theme(legend.title = element_blank(), 
@@ -177,3 +169,4 @@ ggplot(res_df) +
   scale_x_continuous(breaks=seq(0, 20, 2))+
   scale_y_continuous(breaks=seq(-6, 5, 1))
 
+ggsave("Figure_3c.png",plt, dpi=500,scale=1.3)
