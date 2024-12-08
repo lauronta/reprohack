@@ -1,50 +1,104 @@
 library(DESeq2)
+library(ggplot2)
 
-help(DESeq2)
+file_path <- "counts.txt" #A modifier selon où est stocké counts.txt à la sortie
+#du workflow
 
-setwd("C:/Users/rapha/OneDrive/Bureau/IODAA/Cours Université Paris-Saclay/Hackathon")
-getwd()
+# Vérifie si le fichier existe dans le dossier spécifié
+if (!file.exists(file_path)) {
+  stop("Le fichier counts.txt est introuvable dans le dossier : ",
+       print(file_path)
+  )
+}
 
+# Chargement des données
+data <- read.table(file_path, header = TRUE, skip = 1)
 
 ## DESeqDataSet --> dds
 
 # 4 different input data type for DESeqDataSet creation 
 # here we focus on count matrix of read counts (with featureCounts) input
 
-data = read.table("counts.txt", header = TRUE, skip =1)
-
-# drop first columns in featureCounts file, keep only the counts_data_matrix and Geneid for orthology
+# drop first columns in featureCounts file, keep only the counts_data_matrix and
+#Geneid for orthology
 data <- data[, -seq(1, 6)]
 
 
 # definition of the experimental plan
-sample <- c("SRR10379721.bam", "SRR10379722.bam", "SRR10379723.bam", "SRR10379724.bam", "SRR10379725.bam", "SRR10379726.bam")
-coldata <- matrix(c("persister replicate 1", "persister replicate 2", "persister replicate 3", "control replicate 1", "control recplicate 2", "control replicate 3"), dimnames = list(sample, 'condition'))
+sample <- c("SRR10379721.bam",
+            "SRR10379722.bam",
+            "SRR10379723.bam",
+            "SRR10379724.bam",
+            "SRR10379725.bam",
+            "SRR10379726.bam")
+coldata <- matrix(c("persister replicate 1",
+                    "persister replicate 2",
+                    "persister replicate 3",
+                    "control replicate 1",
+                    "control recplicate 2",
+                    "control replicate 3"),
+                    dimnames = list(sample, 'condition'))
 print(coldata)
 
 
 # first if it is a control or test group -- replace with colnames of data
-coldata <- matrix( c("persister", "persister", "persister", "control", "control", "control"), 
-                   dimnames = list(c("SRR10379721.bam", "SRR10379722.bam", "SRR10379723.bam", "SRR10379724.bam", "SRR10379725.bam", "SRR10379726.bam"), 'condition') )
+coldata <- matrix( c("persister",
+                     "persister",
+                     "persister",
+                     "control",
+                     "control",
+                     "control"), 
+                    dimnames = list(c("SRR10379721.bam",
+                                     "SRR10379722.bam",
+                                     "SRR10379723.bam",
+                                     "SRR10379724.bam",
+                                     "SRR10379725.bam",
+                                     "SRR10379726.bam"),
+                                      'condition') 
+                   )
 print(coldata)
 
-dds <- DESeqDataSetFromMatrix(countData = data, colData = coldata, design = ~ condition)
-
-
-
-# correcting variance
-# vst (n<30 ) or rlog (n>30) approach
-# use 
+dds <- DESeqDataSetFromMatrix(countData = data,
+                              colData = coldata,
+                              design = ~ condition)
 
 
 # performing differencial analysis 
 dds <- DESeq(dds)
 
-# head(data)
 res <- results(dds)
 
-plotMA(res, colSig = "red", ylim=c(-4.25, 4.25))
+# Affichage des résultats
 
-# Import de AureoWiki
-aureowiki = read.table("OrthologueTable.tsv", header = TRUE, skip = 0, fill = TRUE)
-aureowiki <- aureowiki[, -seq(3,4)] # suppression d'une colonne inutile
+### Solution 1, utiliser directement la fonction plotMA peu documentée et avec
+#peu de paramètres
+
+# plotMA(res,
+#        alpha=0.05,
+#        ylab=expression(log[2]*' fold change'),
+#        colSig = "red", ylim=c(-4.25, 4.25)
+#        )
+
+### Solution 2, convertir le résultat de DESeq en dataframe,
+# calculer la significativité, attribuer le label correspondant
+# et afficher avec ggplot qui est bien plus documenté et maléable.
+
+res_df <- as.data.frame(res)
+alpha <- 0.05
+res_df$significance <- ifelse(
+  is.na(res_df$padj), "NA",
+  ifelse(res_df$padj < alpha, "Significant", "Not Significant")
+)
+
+ggplot(res_df, aes(x = baseMean, y = log2FoldChange, color = significance)) +
+  geom_point(alpha = 0.5, size = 1) +
+  scale_color_manual(values = c(
+    "Not Significant" = "black", 
+    "Significant" = "red", 
+    "NA" = "grey"
+  )) +  
+  labs(y = expression(log[2]*' fold change'),
+       x = 'Mean of normalized counts') +
+  scale_x_log10() +
+  scale_y_continuous(breaks=seq(-4, 4, 2)) +
+  theme_gray()
