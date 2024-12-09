@@ -1,15 +1,13 @@
 library(DESeq2)
-library("dplyr")
+library(dplyr)
 library(jsonlite)
 library(ggplot2)
 library(ggrepel)
 
-setwd("~/Bureau/IODAA/iodaa/HACKATHON/reprohack/")
-
 
 ################################################################################
 # download translation-related genes from KEGG-rest API
-data <- fromJSON("https://rest.kegg.jp/get/br:sao00001/json")
+data <- fromJSON("kegg.json")
 
 # retourne dernier sous-élément d'une liste, ici el
 f <- function(el) el[length(el)]

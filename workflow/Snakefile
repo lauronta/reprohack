@@ -5,7 +5,7 @@ samples_dev = ["test_21"] #références des accesions
 
 configfile: "workflow/config.yaml"
 
-localrules: all, download_annotated_ref_genome, download_ref_genome, download_rnaseq # pour améliorer les choses sur un cluster 
+localrules: all, download_annotated_ref_genome, download_ref_genome, download_rnaseq, download_kegg_orthology# pour améliorer les choses sur un cluster 
 
 rule all:
     input:
@@ -37,6 +37,12 @@ rule download_rnaseq:
     shell:
         "prefetch {wildcards.sample}" 
 
+rule download_kegg_orthology:
+    output:
+        "kegg.json"
+    threads: 1
+    shell:
+        "wget -O kegg.json https://rest.kegg.jp/get/br:sao00001/json"
 
 rule index_genome:
     input:
@@ -109,7 +115,7 @@ rule count:
 
 rule figure:
     input:
-        "counts.txt"
+        "counts.txt", "kegg.json"
     output:
         "Figure_3c.png", "Supplementary Figure 3.png"
     singularity: config["singularity"]["R+DESeq2"]
