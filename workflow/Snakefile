@@ -9,7 +9,7 @@ localrules: all, download_annotated_ref_genome, download_ref_genome, download_rn
 
 rule all:
     input:
-        "counts.txt"
+        "Figure_3c.png", "Supplementary Figure 3.png"
 
 
 # Téléchargement 
@@ -106,3 +106,12 @@ rule count:
     threads: config["feature_counts"]["threads"]
     shell:
         "featureCounts -T {threads} -t {params[0]} -g {params[1]} -s {params[2]} -a {input.annotation} -o {output[0]} {input.id}"
+
+rule figure:
+    input:
+        "counts.txt"
+    output:
+        "Figure_3c.png", "Supplementary Figure 3.png"
+    singularity: config["singularity"]["R+DESeq2"]
+    shell:
+        "r analysis.R && r analysis2.R"

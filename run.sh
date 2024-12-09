@@ -26,16 +26,6 @@ exit 1
 fi
 
 
-## check for recipes 
-BASEDIR=$(cd $(dirname $0) && pwd)
-for file in $BASEDIR/recipes/*
-do
-if [ -f $file ]
-then
-echo "found recipe : $( basename $file ) "
-fi
-done
-
 echo "this is the base directory : $BASEDIR"
 echo "this is the running directory : $(pwd)"
 

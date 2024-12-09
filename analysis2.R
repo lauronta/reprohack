@@ -118,11 +118,11 @@ res_df <- as.data.frame(res)
 head(res_df)
 
 # compute log2BaseMean
-# res_df$log2_baseMean <- log2(res_df$baseMean)
+res_df$log2_baseMean <- log2(res_df$baseMean)
 
 # add information from KEGG orthology previously downloaded
 res_df$geneID <- rownames(res_df)
-res_df <- left_join(res_df,gene_names, by = c("geneID"="geneID"))
+res_df <- inner_join(res_df,gene_names, by = c("geneID"="geneID"))
 
 
 # Définition d'une liste de gènes à afficher
@@ -140,7 +140,7 @@ plt <- ggplot(res_df) +
   geom_point(data= filter(res_df, label=='00970 Aminoacyl-tRNA biosynthesis [PATH:sao00970]' ), 
              aes(x = log2_baseMean, y = log2FoldChange,shape = 'AA-tRNA synthetases'), stroke=1, colour = 'black')+
   scale_shape_manual(values = c("AA-tRNA synthetases" = 1))+
-  geom_text_repel(data=filter(res_df, name %in% genes_to_annotate),
+  geom_text_repel(data=filter(res_df, name %in% genes_to_annotate),max.overlaps = Inf,
                   aes(x=log2_baseMean,y=log2FoldChange,label=name),size=18/.pt,box.padding = 2)+
   geom_hline(yintercept = 0, linetype = "dashed", color = "black", size = 1) +
   labs(x = expression(Log[2] *" Base Mean"), y = expression(Log[2] *" Fold Change")) +
@@ -169,4 +169,4 @@ plt <- ggplot(res_df) +
   scale_x_continuous(breaks=seq(0, 20, 2))+
   scale_y_continuous(breaks=seq(-6, 5, 1))
 
-ggsave("Figure_3c.png",plt, dpi=500,scale=1.3)
+ggsave("Figure_3c.png",plt, dpi=500,scale=1.2, width = 4, height = 4)
