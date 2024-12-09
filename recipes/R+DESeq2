@@ -15,7 +15,9 @@ From : rocker/r-ver:3.4.1
     
     # install DESeq2
     echo 'BiocInstaller::biocLite("DESeq2")' | r -
-  
+    
+    # install ggprepel and dplyr
+    echo 'install.packages(c("ggrepel","dplyr"))' | r -
     
 %environment
 
