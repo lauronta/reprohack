@@ -133,7 +133,7 @@ plt <- ggplot(res_df) +
   theme_bw()+
   geom_point(aes(x = log2_baseMean, y = log2FoldChange, color = ifelse(padj < 0.05, "Significant", "Not Significant")), 
               size=2) +
-  scale_color_manual(values = c("Significant" = "red", "Not Significant" = "grey"),na.translate = F) +
+  scale_color_manual(values = c("Significant" = "red", "Not Significant" = "grey50"),na.translate = F) +
   geom_point(data= filter(res_df, label=='00970 Aminoacyl-tRNA biosynthesis [PATH:sao00970]' ), 
              aes(x = log2_baseMean, y = log2FoldChange,shape = 'AA-tRNA synthetases'), stroke=1, colour = 'black')+
   scale_shape_manual(values = c("AA-tRNA synthetases" = 1))+
