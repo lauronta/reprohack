@@ -131,19 +131,18 @@ genes_to_annotate <- c("frr", "infA", "infB", "tsf", "infC", "PTH1")
 # Ploting
 plt <- ggplot(res_df) +
   theme_bw()+
-  geom_point(aes(x = log2_baseMean, y = log2FoldChange, color = ifelse(is.na(padj), "NA", 
-              ifelse(padj < 0.05, "Significant", "Not Significant"))), 
+  geom_point(aes(x = log2_baseMean, y = log2FoldChange, color = ifelse(padj < 0.05, "Significant", "Not Significant")), 
               size=2) +
-  scale_color_manual(values = c("Significant" = "red", "Not Significant" = "grey50")) +
+  scale_color_manual(values = c("Significant" = "red", "Not Significant" = "grey"),na.translate = F) +
   geom_point(data= filter(res_df, label=='00970 Aminoacyl-tRNA biosynthesis [PATH:sao00970]' ), 
              aes(x = log2_baseMean, y = log2FoldChange,shape = 'AA-tRNA synthetases'), stroke=1, colour = 'black')+
   scale_shape_manual(values = c("AA-tRNA synthetases" = 1))+
-  geom_text_repel(data=filter(res_df, name %in% genes_to_annotate),max.overlaps = Inf,
+  geom_text_repel(data=filter(res_df, name %in% genes_to_annotate),
                   aes(x=log2_baseMean,y=log2FoldChange,label=name),size=18/.pt,box.padding = 2)+
   geom_hline(yintercept = 0, linetype = "dashed", color = "black", size = 1) +
   labs(x = expression(Log[2] *" Base Mean"), y = expression(Log[2] *" Fold Change")) +
   theme(legend.title = element_blank(), 
-        panel.border = element_rect(linewidth = 1.5, fill = NA,colour = 'black'),
+        panel.border = element_rect(size=3, fill = NA,colour = 'black'),
         legend.position = c(0.01, .01),
         legend.justification = c("left", "bottom"),
         legend.box.just = "left",
@@ -155,16 +154,15 @@ plt <- ggplot(res_df) +
         panel.grid = element_blank(),
         aspect.ratio = 1,
         axis.text = element_text(color='black',size = 12),
-        axis.ticks = element_line(color='black', linewidth = 1.5),
+        axis.ticks = element_line(color='black',size=1.5),
         axis.ticks.length = unit(2, "mm")) +
   guides(color = guide_legend(order = 1),
          shape = guide_legend(order = 2)) +
   coord_cartesian(
     xlim = c(0, 20),
     ylim = c(-6, 5),
-    expand = FALSE,
-    clip = "off") +
+    expand = FALSE) +
   scale_x_continuous(breaks=seq(0, 20, 2))+
   scale_y_continuous(breaks=seq(-6, 5, 1))
 
-ggsave("Figure_3c.png",plt, dpi=500,scale=1.2, width = 4, height = 4)
+ggsave("Figure_3c.png",plt,scale=1.2,dpi=500,width = 4, height = 4, units="in")
